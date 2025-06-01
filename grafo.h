@@ -1,3 +1,7 @@
+// Felipe Giovanne Alves Netto - 2147115
+// Luana Ribeiro Solly - 2093108
+// Gabriel Oda - 2178645
+
 #include <iostream>
 #include <fstream>
 #include <string>
