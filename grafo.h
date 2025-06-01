@@ -9,264 +9,264 @@ class Grafo {
 private:
     int numVertices;
     int numArestas;
-    int labelCapacity;
-    string* labels;
-    int* degree;
+    int capacidadeRotulos;
+    string* rotulos;
+    int* grau;
     int** adj;
-    int** weight;
-    bool directed;
-    bool weighted;
+    int** peso;
+    bool direcionado;
+    bool ponderado;
 
-    void initStructures(int initialCapacity) {
-        if (initialCapacity <= 0) {
+    void inicializarEstruturas(int capacidadeInicial) {
+        if (capacidadeInicial <= 0) {
             throw invalid_argument("Capacidade inicial deve ser positiva");
         }
         try {
-            labelCapacity = initialCapacity;
-            labels = new string[labelCapacity];
-            degree = new int[labelCapacity];
-            for (int i = 0; i < labelCapacity; ++i) {
-                degree[i] = 0;
+            capacidadeRotulos = capacidadeInicial;
+            rotulos = new string[capacidadeRotulos];
+            grau = new int[capacidadeRotulos];
+            for (int i = 0; i < capacidadeRotulos; ++i) {
+                grau[i] = 0;
             }
             numVertices = 0;
             adj = nullptr;
-            weight = nullptr;
+            peso = nullptr;
         } catch (const exception& e) {
-            throw runtime_error("Falha na alocação de memória durante inicialização");
+            throw runtime_error("Falha na alocacao de memoria durante inicializacao");
         }
     }
 
-    void ensureLabelCapacity() {
-        if (numVertices < labelCapacity) return;
+    void garantirCapacidadeRotulos() {
+        if (numVertices < capacidadeRotulos) return;
         try {
-            int newCap = labelCapacity * 2;
-            string* newLabels = new string[newCap];
-            int* newDegree = new int[newCap];
+            int novaCapacidade = capacidadeRotulos * 2;
+            string* novosRotulos = new string[novaCapacidade];
+            int* novosGraus = new int[novaCapacidade];
             for (int i = 0; i < numVertices; ++i) {
-                newLabels[i] = labels[i];
-                newDegree[i] = degree[i];
+                novosRotulos[i] = rotulos[i];
+                novosGraus[i] = grau[i];
             }
-            for (int i = numVertices; i < newCap; ++i) {
-                newDegree[i] = 0;
+            for (int i = numVertices; i < novaCapacidade; ++i) {
+                novosGraus[i] = 0;
             }
-            delete[] labels;
-            delete[] degree;
-            labels = newLabels;
-            degree = newDegree;
-            labelCapacity = newCap;
+            delete[] rotulos;
+            delete[] grau;
+            rotulos = novosRotulos;
+            grau = novosGraus;
+            capacidadeRotulos = novaCapacidade;
         } catch (const exception& e) {
-            throw runtime_error("Falha na alocação de memória ao expandir capacidade");
+            throw runtime_error("Falha na alocacao de memoria ao expandir capacidade");
         }
     }
     
-    int findOrAddLabel(const string& r) {
+    int encontrarOuAdicionarRotulo(const string& r) {
         if (r.empty()) {
-            throw invalid_argument("Rótulo não pode ser vazio");
+            throw invalid_argument("Rotulo nao pode ser vazio");
         }
         for (int i = 0; i < numVertices; ++i) {
-            if (labels[i] == r) return i;
+            if (rotulos[i] == r) return i;
         }
-        ensureLabelCapacity();
-        labels[numVertices] = r;
-        degree[numVertices] = 0;
+        garantirCapacidadeRotulos();
+        rotulos[numVertices] = r;
+        grau[numVertices] = 0;
         return numVertices++;
     }
 
-    int findLabel(const string& r) const {
+    int encontrarRotulo(const string& r) const {
         if (r.empty()) {
-            throw invalid_argument("Rótulo não pode ser vazio");
+            throw invalid_argument("Rotulo nao pode ser vazio");
         }
         for (int i = 0; i < numVertices; ++i) {
-            if (labels[i] == r) return i;
+            if (rotulos[i] == r) return i;
         }
         return -1;
     }
 
-    void freeAdj() {
+    void liberarAdj() {
         if (adj) {
             try {
                 for (int i = 0; i < numVertices; ++i) {
                     delete[] adj[i];
-                    if (weighted && weight) {
-                        delete[] weight[i];
+                    if (ponderado && peso) {
+                        delete[] peso[i];
                     }
                 }
                 delete[] adj;
                 adj = nullptr;
             } catch (...) {
-                throw runtime_error("Erro ao liberar memória das matrizes de adjacência");
+                throw runtime_error("Erro ao liberar memoria das matrizes de adjacencia");
             }
         }
-        if (weighted && weight) {
-            delete[] weight;
-            weight = nullptr;
+        if (ponderado && peso) {
+            delete[] peso;
+            peso = nullptr;
         }
     }
 
     void primeiraPassagem(const string& nomeArquivo) {
         if (nomeArquivo.empty()) {
-            throw invalid_argument("Nome do arquivo não pode ser vazio");
+            throw invalid_argument("Nome do arquivo nao pode ser vazio");
         }
 
-        ifstream in(nomeArquivo);
-        if (!in.is_open()) {
-            throw runtime_error("Não foi possível abrir o arquivo: " + nomeArquivo);
+        ifstream arquivo(nomeArquivo);
+        if (!arquivo.is_open()) {
+            throw runtime_error("Nao foi possivel abrir o arquivo: " + nomeArquivo);
         }
 
         string linha;
-        int lineNum = 0;
-        while (getline(in, linha)) {
-            lineNum++;
+        int numLinha = 0;
+        while (getline(arquivo, linha)) {
+            numLinha++;
             if (linha.empty()) continue;
             
             size_t p1 = linha.find(';');
             if (p1 == string::npos) {
-                in.close();
-                throw runtime_error("Formato inválido na linha " + to_string(lineNum) + ": falta primeiro separador");
+                arquivo.close();
+                throw runtime_error("Formato invalido na linha " + to_string(numLinha) + ": falta primeiro separador");
             }
             
             size_t p2 = linha.find(';', p1 + 1);
             if (p2 == string::npos) {
-                in.close();
-                throw runtime_error("Formato inválido na linha " + to_string(lineNum) + ": falta segundo separador");
+                arquivo.close();
+                throw runtime_error("Formato invalido na linha " + to_string(numLinha) + ": falta segundo separador");
             }
 
             try {
-                string ru = linha.substr(0, p1);
-                string rv = linha.substr(p1 + 1, p2 - (p1 + 1));
+                string rotuloU = linha.substr(0, p1);
+                string rotuloV = linha.substr(p1 + 1, p2 - (p1 + 1));
 
-                int iu = findOrAddLabel(ru);
-                int iv = findOrAddLabel(rv);
+                int indiceU = encontrarOuAdicionarRotulo(rotuloU);
+                int indiceV = encontrarOuAdicionarRotulo(rotuloV);
         
-                if (directed) {
-                    degree[iu]++;
+                if (direcionado) {
+                    grau[indiceU]++;
                 } else {
-                    degree[iu]++;
-                    degree[iv]++;
+                    grau[indiceU]++;
+                    grau[indiceV]++;
                 }
                 numArestas++;
             } catch (const exception& e) {
-                in.close();
-                throw runtime_error("Erro na linha " + to_string(lineNum) + ": " + e.what());
+                arquivo.close();
+                throw runtime_error("Erro na linha " + to_string(numLinha) + ": " + e.what());
             }
         }
-        in.close();
+        arquivo.close();
     }
 
-    void alocaAdjESetDegreeZero() {
+    void alocarAdjEZerarGrau() {
         try {
             adj = new int*[numVertices];
-            if (weighted) {
-                weight = new int*[numVertices];
+            if (ponderado) {
+                peso = new int*[numVertices];
             }
             for (int i = 0; i < numVertices; ++i) {
-                if (degree[i] < 0) {
-                    throw runtime_error("Grau negativo detectado para vertice " + labels[i]);
+                if (grau[i] < 0) {
+                    throw runtime_error("Grau negativo detectado para vertice " + rotulos[i]);
                 }
-                adj[i] = new int[degree[i]];
-                if (weighted) {
-                    weight[i] = new int[degree[i]];
+                adj[i] = new int[grau[i]];
+                if (ponderado) {
+                    peso[i] = new int[grau[i]];
                 }
-                degree[i] = 0;
+                grau[i] = 0;
             }
         } catch (const exception& e) {
-            throw runtime_error("Falha na alocação de memória para listas de adjacência");
+            throw runtime_error("Falha na alocacao de memoria para listas de adjacencia");
         }
     }
 
     void segundaPassagem(const string& nomeArquivo) {
         if (nomeArquivo.empty()) {
-            throw invalid_argument("Nome do arquivo não pode ser vazio");
+            throw invalid_argument("Nome do arquivo nao pode ser vazio");
         }
 
-        ifstream in(nomeArquivo);
-        if (!in.is_open()) {
-            throw runtime_error("Não foi possível abrir o arquivo: " + nomeArquivo);
+        ifstream arquivo(nomeArquivo);
+        if (!arquivo.is_open()) {
+            throw runtime_error("Nao foi possivel abrir o arquivo: " + nomeArquivo);
         }
 
         string linha;
-        int lineNum = 0;
-        while (getline(in, linha)) {
-            lineNum++;
+        int numLinha = 0;
+        while (getline(arquivo, linha)) {
+            numLinha++;
             if (linha.empty()) continue;
             
             size_t p1 = linha.find(';');
             size_t p2 = linha.find(';', p1 + 1);
             if (p1 == string::npos || p2 == string::npos) {
-                in.close();
-                throw runtime_error("Formato inválido na linha " + to_string(lineNum));
+                arquivo.close();
+                throw runtime_error("Formato invalido na linha " + to_string(numLinha));
             }
 
             try {
-                string ru = linha.substr(0, p1);
-                string rv = linha.substr(p1 + 1, p2 - (p1 + 1));
-                int iu = findLabel(ru);
-                int iv = findLabel(rv);
+                string rotuloU = linha.substr(0, p1);
+                string rotuloV = linha.substr(p1 + 1, p2 - (p1 + 1));
+                int indiceU = encontrarRotulo(rotuloU);
+                int indiceV = encontrarRotulo(rotuloV);
 
-                if (iu < 0 || iv < 0) {
-                    throw runtime_error("Vertice nao encontrado: " + (iu < 0 ? ru : rv));
+                if (indiceU < 0 || indiceV < 0) {
+                    throw runtime_error("Vertice nao encontrado: " + (indiceU < 0 ? rotuloU : rotuloV));
                 }
 
-                int w = 1;
-                if (weighted) {
+                int valorPeso = 1;
+                if (ponderado) {
                     size_t p3 = linha.find(';', p2 + 1);
                     if (p3 == string::npos) {
                         throw runtime_error("Falta peso na aresta para grafo ponderado");
                     }
-                    string rs = linha.substr(p2 + 1, p3 - (p2 + 1));
+                    string strPeso = linha.substr(p2 + 1, p3 - (p2 + 1));
                     try {
-                        w = stoi(rs);
-                        if (w < 0) {
-                            throw runtime_error("Peso negativo não permitido: " + rs);
+                        valorPeso = stoi(strPeso);
+                        if (valorPeso < 0) {
+                            throw runtime_error("Peso negativo nao permitido: " + strPeso);
                         }
                     } catch (const invalid_argument&) {
-                        throw runtime_error("Peso inválido: " + rs);
+                        throw runtime_error("Peso invalido: " + strPeso);
                     } catch (const out_of_range&) {
-                        throw runtime_error("Peso fora do intervalo permitido: " + rs);
+                        throw runtime_error("Peso fora do intervalo permitido: " + strPeso);
                     }
                 }
 
-                int idxU = degree[iu]++;
+                int idxU = grau[indiceU]++;
                 if (idxU >= numVertices) {
-                    throw runtime_error("Indice de adjacencia excede limite para vertice " + ru);
+                    throw runtime_error("Indice de adjacencia excede limite para vertice " + rotuloU);
                 }
-                adj[iu][idxU] = iv;
-                if (weighted) {
-                    weight[iu][idxU] = w;
+                adj[indiceU][idxU] = indiceV;
+                if (ponderado) {
+                    peso[indiceU][idxU] = valorPeso;
                 }
 
-                if (!directed) {
-                    int idxV = degree[iv]++;
+                if (!direcionado) {
+                    int idxV = grau[indiceV]++;
                     if (idxV >= numVertices) {
-                        throw runtime_error("Indice de adjacencia excede limite para vertice " + rv);
+                        throw runtime_error("Indice de adjacencia excede limite para vertice " + rotuloV);
                     }
-                    adj[iv][idxV] = iu;
-                    if (weighted) {
-                        weight[iv][idxV] = w;
+                    adj[indiceV][idxV] = indiceU;
+                    if (ponderado) {
+                        peso[indiceV][idxV] = valorPeso;
                     }
                 }
             } catch (const exception& e) {
-                in.close();
-                throw runtime_error("Erro na linha " + to_string(lineNum) + ": " + e.what());
+                arquivo.close();
+                throw runtime_error("Erro na linha " + to_string(numLinha) + ": " + e.what());
             }
         }
-        in.close();
+        arquivo.close();
     }
 
-    void dfsRec(int u, bool visited[], int** sortedAdj, int* sortedDeg) const {
+    void buscaProfundidadeRecursiva(int u, bool visitado[], int** adjOrdenado, int* grauOrdenado) const {
         if (u < 0 || u >= numVertices) {
-            throw out_of_range("Indice de vertice invalido na DFS");
+            throw out_of_range("Indice de vertice invalido na busca em profundidade");
         }
-        visited[u] = true;
-        cout << labels[u] << " ";
-        int d = sortedDeg[u];
+        visitado[u] = true;
+        cout << rotulos[u] << " ";
+        int d = grauOrdenado[u];
         for (int i = 0; i < d; ++i) {
-            int v = sortedAdj[u][i];
+            int v = adjOrdenado[u][i];
             if (v < 0 || v >= numVertices) {
-                throw out_of_range("Indice de adjacencia invalido na DFS");
+                throw out_of_range("Indice de adjacencia invalido na busca em profundidade");
             }
-            if (!visited[v]) {
-                dfsRec(v, visited, sortedAdj, sortedDeg);
+            if (!visitado[v]) {
+                buscaProfundidadeRecursiva(v, visitado, adjOrdenado, grauOrdenado);
             }
         }
     }
@@ -276,24 +276,24 @@ public:
         try {
             numVertices = 0;
             numArestas = 0;
-            labelCapacity = 0;
-            labels = nullptr;
-            degree = nullptr;
+            capacidadeRotulos = 0;
+            rotulos = nullptr;
+            grau = nullptr;
             adj = nullptr;
-            weight = nullptr;
-            directed = false;
-            weighted = false;
-            initStructures(8);
+            peso = nullptr;
+            direcionado = false;
+            ponderado = false;
+            inicializarEstruturas(8);
         } catch (const exception& e) {
-            throw runtime_error("Falha na construção do grafo: " + string(e.what()));
+            throw runtime_error("Falha na construcao do grafo: " + string(e.what()));
         }
     }
 
     ~Grafo() {
         try {
-            delete[] labels;
-            delete[] degree;
-            freeAdj();
+            delete[] rotulos;
+            delete[] grau;
+            liberarAdj();
         } catch (...) {
             cerr << "Erro ao destruir o grafo" << endl;
         }
@@ -304,16 +304,16 @@ public:
 
     void carregarG1(const string& nomeArquivo) {
         try {
-            directed = false;
-            weighted = false;
+            direcionado = false;
+            ponderado = false;
             numVertices = 0;
             numArestas = 0;
-            delete[] labels;
-            delete[] degree;
-            initStructures(8);
+            delete[] rotulos;
+            delete[] grau;
+            inicializarEstruturas(8);
 
             primeiraPassagem(nomeArquivo);
-            alocaAdjESetDegreeZero();
+            alocarAdjEZerarGrau();
             segundaPassagem(nomeArquivo);
         } catch (const exception& e) {
             throw runtime_error("Erro ao carregar G1: " + string(e.what()));
@@ -322,16 +322,16 @@ public:
 
     void carregarG2(const string& nomeArquivo) {
         try {
-            directed = true;
-            weighted = false;
+            direcionado = true;
+            ponderado = false;
             numVertices = 0;
             numArestas = 0;
-            delete[] labels;
-            delete[] degree;
-            initStructures(8);
+            delete[] rotulos;
+            delete[] grau;
+            inicializarEstruturas(8);
 
             primeiraPassagem(nomeArquivo);
-            alocaAdjESetDegreeZero();
+            alocarAdjEZerarGrau();
             segundaPassagem(nomeArquivo);
         } catch (const exception& e) {
             throw runtime_error("Erro ao carregar G2: " + string(e.what()));
@@ -340,16 +340,16 @@ public:
 
     void carregarG3(const string& nomeArquivo) {
         try {
-            directed = false;
-            weighted = true;
+            direcionado = false;
+            ponderado = true;
             numVertices = 0;
             numArestas = 0;
-            delete[] labels;
-            delete[] degree;
-            initStructures(8);
+            delete[] rotulos;
+            delete[] grau;
+            inicializarEstruturas(8);
 
             primeiraPassagem(nomeArquivo);
-            alocaAdjESetDegreeZero();
+            alocarAdjEZerarGrau();
             segundaPassagem(nomeArquivo);
         } catch (const exception& e) {
             throw runtime_error("Erro ao carregar G3: " + string(e.what()));
@@ -359,15 +359,15 @@ public:
     void imprimirAdj() const {
         try {
             for (int i = 0; i < numVertices; ++i) {
-                cout << labels[i] << ":";
-                int cnt = directed || !weighted ? degree[i] : degree[i];
-                for (int j = 0; j < cnt; ++j) {
+                cout << rotulos[i] << ":";
+                int cont = direcionado || !ponderado ? grau[i] : grau[i];
+                for (int j = 0; j < cont; ++j) {
                     if (adj[i][j] < 0 || adj[i][j] >= numVertices) {
-                        throw out_of_range("Índice de adjacência inválido");
+                        throw out_of_range("Indice de adjacencia invalido");
                     }
-                    cout << " " << labels[adj[i][j]];
-                    if (weighted) {
-                        cout << "(" << weight[i][j] << ")";
+                    cout << " " << rotulos[adj[i][j]];
+                    if (ponderado) {
+                        cout << "(" << peso[i][j] << ")";
                     }
                 }
                 cout << "\n";
@@ -377,140 +377,140 @@ public:
         }
     }
 
-    void buscaEmLargura(const string& startLabel) const {
+    void buscaEmLargura(const string& rotuloInicial) const {
         try {
-            int start = findLabel(startLabel);
-            if (start < 0) {
-                throw invalid_argument("Vertice inicial \"" + startLabel + "\" nao existe");
+            int inicio = encontrarRotulo(rotuloInicial);
+            if (inicio < 0) {
+                throw invalid_argument("Vertice inicial \"" + rotuloInicial + "\" nao existe");
             }
 
-            int** sortedAdj = new int*[numVertices];
-            int* sortedDeg = new int[numVertices];
+            int** adjOrdenado = new int*[numVertices];
+            int* grauOrdenado = new int[numVertices];
             for (int u = 0; u < numVertices; ++u) {
-                int d = degree[u];
-                sortedDeg[u] = d;
+                int d = grau[u];
+                grauOrdenado[u] = d;
                 int* temp = new int[d];
                 for (int i = 0; i < d; ++i) {
                     temp[i] = adj[u][i];
                 }
                 for (int i = 0; i < d - 1; ++i) {
-                    int minIdx = i;
+                    int idxMin = i;
                     for (int j = i + 1; j < d; ++j) {
-                        if (labels[temp[j]] < labels[temp[minIdx]]) {
-                            minIdx = j;
+                        if (rotulos[temp[j]] < rotulos[temp[idxMin]]) {
+                            idxMin = j;
                         }
                     }
                     int aux = temp[i];
-                    temp[i] = temp[minIdx];
-                    temp[minIdx] = aux;
+                    temp[i] = temp[idxMin];
+                    temp[idxMin] = aux;
                 }
-                sortedAdj[u] = temp;
+                adjOrdenado[u] = temp;
             }
 
-            bool* visited = new bool[numVertices];
+            bool* visitado = new bool[numVertices];
             for (int i = 0; i < numVertices; ++i) {
-                visited[i] = false;
+                visitado[i] = false;
             }
 
-            int* q = new int[numVertices];
-            int head = 0, tail = 0;
+            int* fila = new int[numVertices];
+            int inicio_fila = 0, fim_fila = 0;
 
-            visited[start] = true;
-            q[tail++] = start;
+            visitado[inicio] = true;
+            fila[fim_fila++] = inicio;
 
             cout << endl << "Busca em largura: " << endl;
             cout << "Visitando vertices: ";
 
-            while (head < tail) {
-                int u = q[head++];
+            while (inicio_fila < fim_fila) {
+                int u = fila[inicio_fila++];
                 if (u < 0 || u >= numVertices) {
-                    throw out_of_range("Índice de vertice inválido na BFS");
+                    throw out_of_range("Indice de vertice invalido na busca em largura");
                 }
-                cout << labels[u] << " ";
+                cout << rotulos[u] << " ";
 
-                int d = sortedDeg[u];
+                int d = grauOrdenado[u];
                 for (int i = 0; i < d; ++i) {
-                    int v = sortedAdj[u][i];
+                    int v = adjOrdenado[u][i];
                     if (v < 0 || v >= numVertices) {
-                        throw out_of_range("Índice de adjacência inválido na BFS");
+                        throw out_of_range("Indice de adjacencia invalido na busca em largura");
                     }
-                    if (!visited[v]) {
-                        visited[v] = true;
-                        q[tail++] = v;
+                    if (!visitado[v]) {
+                        visitado[v] = true;
+                        fila[fim_fila++] = v;
                     }
                 }
             }
             cout << "\n";
 
             for (int u = 0; u < numVertices; ++u) {
-                delete[] sortedAdj[u];
+                delete[] adjOrdenado[u];
             }
-            delete[] sortedAdj;
-            delete[] sortedDeg;
-            delete[] visited;
-            delete[] q;
+            delete[] adjOrdenado;
+            delete[] grauOrdenado;
+            delete[] visitado;
+            delete[] fila;
         } catch (const exception& e) {
             throw runtime_error("Erro na busca em largura: " + string(e.what()));
         }
     }
 
-    void buscaEmProfundidade(const string& startLabel) const {
+    void buscaEmProfundidade(const string& rotuloInicial) const {
         try {
-            int start = findLabel(startLabel);
-            if (start < 0) {
-                throw invalid_argument("Vertice inicial \"" + startLabel + "\" nao existe");
+            int inicio = encontrarRotulo(rotuloInicial);
+            if (inicio < 0) {
+                throw invalid_argument("Vertice inicial \"" + rotuloInicial + "\" nao existe");
             }
 
             cout << endl << "Busca em profundidade: " << endl;
             cout << "Visitando vertices: ";
 
-            int** sortedAdj = new int*[numVertices];
-            int* sortedDeg = new int[numVertices];
+            int** adjOrdenado = new int*[numVertices];
+            int* grauOrdenado = new int[numVertices];
             for (int u = 0; u < numVertices; ++u) {
-                int d = degree[u];
-                sortedDeg[u] = d;
+                int d = grau[u];
+                grauOrdenado[u] = d;
                 int* temp = new int[d];
                 for (int i = 0; i < d; ++i) {
                     temp[i] = adj[u][i];
                 }
                 for (int i = 0; i < d - 1; ++i) {
-                    int minIdx = i;
+                    int idxMin = i;
                     for (int j = i + 1; j < d; ++j) {
-                        if (labels[temp[j]] < labels[temp[minIdx]]) {
-                            minIdx = j;
+                        if (rotulos[temp[j]] < rotulos[temp[idxMin]]) {
+                            idxMin = j;
                         }
                     }
                     int aux = temp[i];
-                    temp[i] = temp[minIdx];
-                    temp[minIdx] = aux;
+                    temp[i] = temp[idxMin];
+                    temp[idxMin] = aux;
                 }
-                sortedAdj[u] = temp;
+                adjOrdenado[u] = temp;
             }
 
-            bool* visited = new bool[numVertices];
+            bool* visitado = new bool[numVertices];
             for (int i = 0; i < numVertices; ++i) {
-                visited[i] = false;
+                visitado[i] = false;
             }
 
             try {
-                dfsRec(start, visited, sortedAdj, sortedDeg);
+                buscaProfundidadeRecursiva(inicio, visitado, adjOrdenado, grauOrdenado);
                 cout << "\n";
             } catch (const exception& e) {
                 for (int u = 0; u < numVertices; ++u) {
-                    delete[] sortedAdj[u];
+                    delete[] adjOrdenado[u];
                 }
-                delete[] sortedAdj;
-                delete[] sortedDeg;
-                delete[] visited;
+                delete[] adjOrdenado;
+                delete[] grauOrdenado;
+                delete[] visitado;
                 throw;
             }
 
             for (int u = 0; u < numVertices; ++u) {
-                delete[] sortedAdj[u];
+                delete[] adjOrdenado[u];
             }
-            delete[] sortedAdj;
-            delete[] sortedDeg;
-            delete[] visited;
+            delete[] adjOrdenado;
+            delete[] grauOrdenado;
+            delete[] visitado;
         } catch (const exception& e) {
             throw runtime_error("Erro na busca em profundidade: " + string(e.what()));
         }
@@ -518,95 +518,95 @@ public:
 
     void menorCaminho(const string& inicio, const string& destino) const {
         try {
-            int s = findLabel(inicio);
-            int t = findLabel(destino);
+            int s = encontrarRotulo(inicio);
+            int t = encontrarRotulo(destino);
             if (s < 0 || t < 0) {
                 throw invalid_argument("Vertice inicial ou final nao existe");
             }
 
-            if (!weighted) {
+            if (!ponderado) {
                 throw invalid_argument("Grafo precisa ser ponderado para calcular menor caminho");
             }
 
-            const int INF = 1000000000;
-            int* dist = new int[numVertices];
-            int* prev = new int[numVertices];
-            bool* visited = new bool[numVertices];
+            const int INFINITO = 1000000000;
+            int* distancia = new int[numVertices];
+            int* anterior = new int[numVertices];
+            bool* visitado = new bool[numVertices];
 
             for (int i = 0; i < numVertices; ++i) {
-                dist[i] = INF;
-                prev[i] = -1;
-                visited[i] = false;
+                distancia[i] = INFINITO;
+                anterior[i] = -1;
+                visitado[i] = false;
             }
-            dist[s] = 0;
+            distancia[s] = 0;
 
             try {
                 for (int iter = 0; iter < numVertices; ++iter) {
                     int u = -1;
-                    int minDist = INF;
+                    int menorDist = INFINITO;
                     for (int i = 0; i < numVertices; ++i) {
-                        if (!visited[i] && dist[i] < minDist) {
-                            minDist = dist[i];
+                        if (!visitado[i] && distancia[i] < menorDist) {
+                            menorDist = distancia[i];
                             u = i;
                         }
                     }
                     if (u == -1) break;
-                    visited[u] = true;
+                    visitado[u] = true;
                     if (u == t) break;
 
-                    for (int i = 0; i < degree[u]; ++i) {
+                    for (int i = 0; i < grau[u]; ++i) {
                         int v = adj[u][i];
                         if (v < 0 || v >= numVertices) {
                             throw out_of_range("Indice de adjacencia invalido");
                         }
-                        int w = weight[u][i];
+                        int w = peso[u][i];
                         if (w < 0) {
                             throw invalid_argument("Peso negativo detectado");
                         }
-                        if (!visited[v] && dist[u] + w < dist[v]) {
-                            dist[v] = dist[u] + w;
-                            prev[v] = u;
+                        if (!visitado[v] && distancia[u] + w < distancia[v]) {
+                            distancia[v] = distancia[u] + w;
+                            anterior[v] = u;
                         }
                     }
                 }
 
-                if (dist[t] == INF) {
+                if (distancia[t] == INFINITO) {
                     cout << "Nao existe caminho de " << inicio << " a " << destino << ".\n";
-                    delete[] dist;
-                    delete[] prev;
-                    delete[] visited;
+                    delete[] distancia;
+                    delete[] anterior;
+                    delete[] visitado;
                     return;
                 }
 
                 cout << endl << "Caminho minimo: " << endl;
-                cout << "Custo: " << dist[t] << "\n";
+                cout << "Custo: " << distancia[t] << "\n";
 
-                int* path = new int[numVertices];
-                int pathSize = 0;
-                for (int v = t; v != -1; v = prev[v]) {
-                    if (pathSize >= numVertices) {
+                int* caminho = new int[numVertices];
+                int tamCaminho = 0;
+                for (int v = t; v != -1; v = anterior[v]) {
+                    if (tamCaminho >= numVertices) {
                         throw runtime_error("Ciclo detectado no caminho");
                     }
-                    path[pathSize++] = v;
+                    caminho[tamCaminho++] = v;
                 }
 
                 cout << "Arestas desse caminho:\n";
-                for (int i = pathSize - 1; i > 0; --i) {
-                    int u = path[i];
-                    int v = path[i - 1];
-                    cout << "(" << labels[u] << "," << labels[v] << ")";
+                for (int i = tamCaminho - 1; i > 0; --i) {
+                    int u = caminho[i];
+                    int v = caminho[i - 1];
+                    cout << "(" << rotulos[u] << "," << rotulos[v] << ")";
                     if (i > 1) cout << " -> ";
                 }
                 cout << "\n";
 
-                delete[] path;
-                delete[] dist;
-                delete[] prev;
-                delete[] visited;
+                delete[] caminho;
+                delete[] distancia;
+                delete[] anterior;
+                delete[] visitado;
             } catch (...) {
-                delete[] dist;
-                delete[] prev;
-                delete[] visited;
+                delete[] distancia;
+                delete[] anterior;
+                delete[] visitado;
                 throw;
             }
         } catch (const exception& e) {
